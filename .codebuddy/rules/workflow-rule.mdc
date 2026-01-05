@@ -15,3 +15,4 @@ provider:
 7. 确保workflow的相关step的一致。
 8. 不允许使用没有定义的变量。
 9. 确保workflow, job, step的name有描述性。
+10. 必须开启cache dependencies以加快构建速度。

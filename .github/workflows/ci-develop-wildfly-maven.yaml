@@ -40,6 +40,24 @@ jobs:
         uses: trufflesecurity/trufflehog@v3.92.4
         with:
           path: .
+          extra_args: --only-verified
+
+      - name: CVE scan with Trivy (filesystem)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          format: sarif
+          output: trivy-results.sarif
+          ignore-unfixed: true
+          vuln-type: os,library
+
+      - name: Upload CVE scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cve-report
+          path: trivy-results.sarif
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Set up Java
         uses: actions/setup-java@v4
