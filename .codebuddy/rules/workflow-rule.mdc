@@ -11,3 +11,7 @@ provider:
 3. 确保workflow有且只有必要的权限。
 4. artfiact name来源自项目，比如pom.xml或package.json。
 5. artfiact version来源自项目，比如pom.xml或package.json。
+6. 保持artfiact version与image tag的一致。
+7. 确保workflow的相关step的一致。
+8. 不允许使用没有定义的变量。
+9. 确保workflow, job, step的name有描述性。
