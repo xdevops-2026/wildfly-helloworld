@@ -205,8 +205,12 @@ jobs:
         run: |
           set -euo pipefail
           REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          DIGEST=$(docker buildx imagetools inspect "$REF" --format '{{ .Manifest.Digest }}')
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          DIGEST=$(docker buildx imagetools inspect "$REF" --raw | jq -r '.digest // (.manifests[0].digest)')
+          if [ -z "$DIGEST" ] || [[ "$DIGEST" != sha256:* ]]; then
+            echo "Failed to parse image digest for $REF" >&2
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Generate and push provenance attestation (version tag)
         uses: actions/attest-build-provenance@v1
