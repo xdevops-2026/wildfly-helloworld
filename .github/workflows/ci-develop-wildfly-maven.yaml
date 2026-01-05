@@ -78,8 +78,9 @@ jobs:
           SHORT_SHA=${GITHUB_SHA::7}
           BUILD_NUMBER=${GITHUB_RUN_NUMBER:-0}
           VERSION_TAG="${CLEAN_VERSION}-${SHORT_SHA}-b${BUILD_NUMBER}"
+          VERSION_TAG_LOWER=$(echo "$VERSION_TAG" | tr '[:upper:]' '[:lower:]')
           echo "artifact_version=$VERSION_TAG" >> $GITHUB_OUTPUT
-          echo "image_tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "image_tag=$VERSION_TAG_LOWER" >> $GITHUB_OUTPUT
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
