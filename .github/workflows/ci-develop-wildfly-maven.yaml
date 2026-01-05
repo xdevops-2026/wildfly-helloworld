@@ -202,12 +202,18 @@ jobs:
 
       - name: Get pushed image digest (version tag)
         id: image_digest
+        env:
+          IMAGE_VERSION_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         run: |
           set -euo pipefail
-          REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$REF" | sed 's|^.*/||')
+          REPO_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE_VERSION_TAG}" 2>/dev/null || true)
+          if [ -z "$REPO_DIGEST" ]; then
+            echo "Failed to retrieve RepoDigests for ${IMAGE_VERSION_TAG}" >&2
+            exit 1
+          fi
+          DIGEST=${REPO_DIGEST#*@}
           if [ -z "$DIGEST" ] || [[ "$DIGEST" != sha256:* ]]; then
-            echo "Failed to parse image digest for $REF" >&2
+            echo "Failed to parse digest from ${REPO_DIGEST}" >&2
             exit 1
           fi
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
