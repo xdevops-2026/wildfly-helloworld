@@ -26,7 +26,7 @@ env:
 
 jobs:
   build-app:
-    name: Build & test Maven project
+    name: Build & Test Maven project
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.versioning.outputs.version }}
