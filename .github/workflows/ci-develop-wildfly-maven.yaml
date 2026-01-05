@@ -31,6 +31,7 @@ jobs:
     outputs:
       version: ${{ steps.versioning.outputs.version }}
       image_tag: ${{ steps.versioning.outputs.image_tag }}
+      artifact_version: ${{ steps.versioning.outputs.artifact_version }}
       artifact_path: ${{ steps.artifact.outputs.artifact_path }}
       artifact_base: ${{ steps.artifact.outputs.artifact_base }}
     steps:
@@ -50,12 +51,10 @@ jobs:
         id: versioning
         run: |
           PROJECT_VERSION=$(mvn -q -DforceStdout -Dexpression=project.version -ntp help:evaluate | tail -1)
-          PROJECT_VERSION=${PROJECT_VERSION:-0.0.0}
-          CLEAN_VERSION=$(echo "$PROJECT_VERSION" | sed 's/-SNAPSHOT$//')
-          SHORT_SHA=${GITHUB_SHA::7}
-          BUILD_NUMBER=${GITHUB_RUN_NUMBER:-0}
-          IMAGE_TAG="${CLEAN_VERSION}-${SHORT_SHA}-b${BUILD_NUMBER}"
-          echo "version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          PROJECT_VERSION=${PROJECT_VERSION:-0.0.0-SNAPSHOT}
+          IMAGE_TAG="$PROJECT_VERSION"
+          echo "version=$PROJECT_VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_version=$PROJECT_VERSION" >> $GITHUB_OUTPUT
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Prepare WAR artifact
@@ -79,9 +78,27 @@ jobs:
       - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.artifact.outputs.artifact_base }}-war-${{ steps.versioning.outputs.version }}
+          name: ${{ steps.artifact.outputs.artifact_base }}-war-${{ steps.versioning.outputs.artifact_version }}
           path: ${{ steps.artifact.outputs.artifact_path }}
           retention-days: 7
+
+      - name: Publish WAR to artifact repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_REPO_ID: ${{ vars.ARTIFACT_REPO_ID }}
+          ARTIFACT_REPO_URL: ${{ vars.ARTIFACT_REPO_URL }}
+          ARTIFACT_REPO_USERNAME: ${{ secrets.ARTIFACT_REPO_USERNAME }}
+          ARTIFACT_REPO_PASSWORD: ${{ secrets.ARTIFACT_REPO_PASSWORD }}
+        run: |
+          set -euo pipefail
+          REPO_ID=${ARTIFACT_REPO_ID:-github}
+          REPO_URL=${ARTIFACT_REPO_URL:-https://maven.pkg.github.com/${GITHUB_REPOSITORY}}
+          REPO_USERNAME=${ARTIFACT_REPO_USERNAME:-${GITHUB_ACTOR}}
+          REPO_PASSWORD=${ARTIFACT_REPO_PASSWORD:-${GITHUB_TOKEN}}
+          mvn -B -ntp deploy -DskipTests \
+            -DaltDeploymentRepository="${REPO_ID}::default::${REPO_URL}" \
+            -Dusername="${REPO_USERNAME}" \
+            -Dpassword="${REPO_PASSWORD}"
 
   build-image:
     name: Build and push container image
@@ -96,7 +113,7 @@ jobs:
       - name: Download WAR artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-app.outputs.artifact_base }}-war-${{ needs.build-app.outputs.version }}
+          name: ${{ needs.build-app.outputs.artifact_base }}-war-${{ needs.build-app.outputs.artifact_version }}
           path: .
 
       - name: Set up QEMU
