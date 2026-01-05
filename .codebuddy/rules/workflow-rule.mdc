@@ -17,3 +17,4 @@ provider:
 9. 确保workflow, job, step的name有描述性。
 10. 必须开启cache dependencies以加快构建速度。
 11. 保持image name与artifact name一致。
+12. 对于develop分支：需要有一个image floating tag: develop。

@@ -14,6 +14,8 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -197,3 +199,18 @@ jobs:
         run: |
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+
+      - name: Get pushed image digest (version tag)
+        id: image_digest
+        run: |
+          set -euo pipefail
+          REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          DIGEST=$(docker buildx imagetools inspect "$REF" --format '{{ .Manifest.Digest }}')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Generate and push provenance attestation (version tag)
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          subject-digest: ${{ steps.image_digest.outputs.digest }}
+          push-to-registry: true
