@@ -31,6 +31,7 @@ jobs:
     outputs:
       version: ${{ steps.versioning.outputs.version }}
       image_tag: ${{ steps.versioning.outputs.image_tag }}
+      artifact_path: ${{ steps.artifact.outputs.artifact_path }}
     steps:
       - uses: actions/checkout@v4
 
@@ -52,27 +53,32 @@ jobs:
           CLEAN_VERSION=$(echo "$PROJECT_VERSION" | sed 's/-SNAPSHOT$//')
           SHORT_SHA=${GITHUB_SHA::7}
           BUILD_NUMBER=${GITHUB_RUN_NUMBER:-0}
-          IMAGE_TAG="${CLEAN_VERSION}-${SHORT_SHA}-${BUILD_NUMBER}"
+          IMAGE_TAG="${CLEAN_VERSION}-${SHORT_SHA}-b${BUILD_NUMBER}"
           echo "version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Prepare WAR artifact
+        id: artifact
         run: |
           FINAL_NAME=$(mvn -q -DforceStdout -Dexpression=project.build.finalName -ntp help:evaluate | tail -1)
           FINAL_NAME=${FINAL_NAME:-app}
           SRC_WAR="target/${FINAL_NAME}.war"
+          DEST_WAR="target/app.war"
           if [ ! -f "$SRC_WAR" ]; then
             echo "WAR not found: $SRC_WAR" >&2
             exit 1
           fi
-          mkdir -p target
-          cp "$SRC_WAR" target/app.war
+          if [ "$SRC_WAR" != "$DEST_WAR" ]; then
+            mkdir -p "$(dirname "$DEST_WAR")"
+            cp "$SRC_WAR" "$DEST_WAR"
+          fi
+          echo "artifact_path=$DEST_WAR" >> $GITHUB_OUTPUT
 
       - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: wildfly-war
-          path: target/app.war
+          path: ${{ steps.artifact.outputs.artifact_path }}
           retention-days: 7
 
   build-image:
@@ -89,7 +95,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: wildfly-war
-          path: target
+          path: .
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -108,11 +114,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: containerfiles/wildfly.Containerfile
+          file: Containerfile
           push: true
           platforms: linux/amd64
-          build-args: |
-            APP_ARTIFACT=target/app.war
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop

@@ -1,0 +1,11 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-01-05T12:26:10.075Z
+provider: 
+---
+
+1. 注释必须使用English。
+2. 不允许定义没有使用的变量。
+3. 确保workflow有且只有必要的权限。
