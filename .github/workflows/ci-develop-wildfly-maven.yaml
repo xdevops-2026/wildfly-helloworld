@@ -32,6 +32,7 @@ jobs:
       version: ${{ steps.versioning.outputs.version }}
       image_tag: ${{ steps.versioning.outputs.image_tag }}
       artifact_path: ${{ steps.artifact.outputs.artifact_path }}
+      artifact_base: ${{ steps.artifact.outputs.artifact_base }}
     steps:
       - uses: actions/checkout@v4
 
@@ -73,11 +74,12 @@ jobs:
             cp "$SRC_WAR" "$DEST_WAR"
           fi
           echo "artifact_path=$DEST_WAR" >> $GITHUB_OUTPUT
+          echo "artifact_base=$FINAL_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wildfly-war
+          name: ${{ steps.artifact.outputs.artifact_base }}-war-${{ steps.versioning.outputs.version }}
           path: ${{ steps.artifact.outputs.artifact_path }}
           retention-days: 7
 
@@ -94,7 +96,7 @@ jobs:
       - name: Download WAR artifact
         uses: actions/download-artifact@v4
         with:
-          name: wildfly-war
+          name: ${{ needs.build-app.outputs.artifact_base }}-war-${{ needs.build-app.outputs.version }}
           path: .
 
       - name: Set up QEMU
