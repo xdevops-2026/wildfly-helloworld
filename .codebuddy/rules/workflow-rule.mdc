@@ -16,5 +16,5 @@ provider:
 8. 不允许使用没有定义的变量。
 9. 确保workflow, job, step的name有描述性。
 10. 必须开启cache dependencies以加快构建速度。
-11. 保持image name与artifact name一致。
+11. 如果镜像需要推送到GHCR，遵循命名规则：ghcr.io/<OWNER>/<REPO>:<TAG>
 12. 对于develop分支：需要有一个image floating tag: develop。

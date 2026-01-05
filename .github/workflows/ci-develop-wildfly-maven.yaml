@@ -30,7 +30,6 @@ jobs:
     name: Build & Test Maven project
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.versioning.outputs.version }}
       image_tag: ${{ steps.versioning.outputs.image_tag }}
       artifact_version: ${{ steps.versioning.outputs.artifact_version }}
       artifact_path: ${{ steps.artifact.outputs.artifact_path }}
@@ -79,7 +78,6 @@ jobs:
           SHORT_SHA=${GITHUB_SHA::7}
           BUILD_NUMBER=${GITHUB_RUN_NUMBER:-0}
           VERSION_TAG="${CLEAN_VERSION}-${SHORT_SHA}-b${BUILD_NUMBER}"
-          echo "version=$VERSION_TAG" >> $GITHUB_OUTPUT
           echo "artifact_version=$VERSION_TAG" >> $GITHUB_OUTPUT
           echo "image_tag=$VERSION_TAG" >> $GITHUB_OUTPUT
 
@@ -140,7 +138,7 @@ jobs:
     needs: build-app
     env:
       IMAGE_TAG: ${{ needs.build-app.outputs.image_tag }}
-      IMAGE_NAME: ${{ github.repository_owner }}/${{ needs.build-app.outputs.artifact_base }}
+      IMAGE_NAME: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
 
