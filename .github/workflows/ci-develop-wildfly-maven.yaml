@@ -205,7 +205,7 @@ jobs:
         run: |
           set -euo pipefail
           REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          DIGEST=$(docker buildx imagetools inspect "$REF" --raw | jq -r '.digest // (.manifests[0].digest)')
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$REF" | sed 's|^.*/||')
           if [ -z "$DIGEST" ] || [[ "$DIGEST" != sha256:* ]]; then
             echo "Failed to parse image digest for $REF" >&2
             exit 1
