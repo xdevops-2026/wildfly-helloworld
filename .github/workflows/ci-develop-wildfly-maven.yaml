@@ -220,6 +220,6 @@ jobs:
       - name: Generate and push provenance attestation (version tag)
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.image_digest.outputs.digest }}
           push-to-registry: true
