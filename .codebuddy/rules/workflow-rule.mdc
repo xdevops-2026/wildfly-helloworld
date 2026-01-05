@@ -7,12 +7,13 @@ provider:
 ---
 
 1. 注释必须使用English。
-2. 不允许定义没有使用的变量。
+2. 不允许定义或保留没有使用的变量。
 3. 确保workflow有且只有必要的权限。
 4. artfiact name来源自项目，比如pom.xml或package.json。
-5. artfiact version来源自项目，比如pom.xml或package.json。
+5. 对于develop分支：artfiact version的格式: <version>-<sha>-b<build number>
 6. 保持artfiact version与image tag的一致。
 7. 确保workflow的相关step的一致。
 8. 不允许使用没有定义的变量。
 9. 确保workflow, job, step的name有描述性。
 10. 必须开启cache dependencies以加快构建速度。
+11. 保持image name与artifact name一致。
